@@ -21,6 +21,7 @@ type OwnProps = {
   placeholder?: string;
   autoComplete?: string;
   maxLength?: number;
+  maxLengthIndicator?: string;
   tabIndex?: number;
   teactExperimentControlled?: boolean;
   inputMode?: 'text' | 'none' | 'tel' | 'url' | 'email' | 'numeric' | 'decimal' | 'search';
@@ -46,6 +47,7 @@ const InputText: FC<OwnProps> = ({
   autoComplete,
   inputMode,
   maxLength,
+  maxLengthIndicator,
   tabIndex,
   teactExperimentControlled,
   onChange,
@@ -94,6 +96,9 @@ const InputText: FC<OwnProps> = ({
       />
       {labelText && (
         <label htmlFor={id}>{labelText}</label>
+      )}
+      {maxLengthIndicator && (
+        <div className="max-length-indicator">{maxLengthIndicator}</div>
       )}
     </div>
   );

@@ -14,6 +14,7 @@ import { STICKER_SIZE_FOLDER_SETTINGS } from '../../../../config';
 import { isUserId } from '../../../../global/helpers';
 import { selectCanShareFolder } from '../../../../global/selectors';
 import { selectCurrentLimit } from '../../../../global/selectors/limits';
+import { FolderUtils } from '../../../../util/folders';
 import { findIntersectionWithSet } from '../../../../util/iteratees';
 import { MEMO_EMPTY_ARRAY } from '../../../../util/memo';
 import { CUSTOM_PEER_EXCLUDED_CHAT_TYPES, CUSTOM_PEER_INCLUDED_CHAT_TYPES } from '../../../../util/objects/customPeer';
@@ -31,6 +32,7 @@ import FloatingActionButton from '../../../ui/FloatingActionButton';
 import InputText from '../../../ui/InputText';
 import ListItem from '../../../ui/ListItem';
 import Spinner from '../../../ui/Spinner';
+import SettingsFoldersIconButton from './SettingsFoldersIconButton';
 
 type OwnProps = {
   state: FoldersState;
@@ -61,6 +63,7 @@ const SUBMIT_TIMEOUT = 500;
 const INITIAL_CHATS_LIMIT = 5;
 
 export const ERROR_NO_TITLE = 'Please provide a title for this folder.';
+export const ERROR_TITLE_TOO_BIG = 'Title too long';
 export const ERROR_NO_CHATS = 'ChatList.Filter.Error.Empty';
 
 const SettingsFoldersEdit: FC<OwnProps & StateProps> = ({
@@ -279,6 +282,8 @@ const SettingsFoldersEdit: FC<OwnProps & StateProps> = ({
     );
   }
 
+  const availableChars = FolderUtils.getTitleAvailableChars(state.folder.title);
+
   return (
     <div className="settings-fab-wrapper">
       <div className="settings-content no-border custom-scroll">
@@ -296,13 +301,19 @@ const SettingsFoldersEdit: FC<OwnProps & StateProps> = ({
             </p>
           )}
 
-          <InputText
-            className="mb-0"
-            label={lang('FilterNameHint')}
-            value={state.folder.title.text}
-            onChange={handleChange}
-            error={state.error && state.error === ERROR_NO_TITLE ? ERROR_NO_TITLE : undefined}
-          />
+          <div className="settings-folder-input-name">
+            <InputText
+              className="mb-0"
+              label={lang('FilterNameHint')}
+              value={FolderUtils.getTitle(state.folder.title)}
+              onChange={handleChange}
+              error={availableChars < 0 ? ERROR_TITLE_TOO_BIG
+                : state.error && state.error === ERROR_NO_TITLE ? ERROR_NO_TITLE : undefined}
+              maxLengthIndicator={availableChars < 0 ? availableChars.toString() : undefined}
+            />
+
+            <SettingsFoldersIconButton state={state} dispatch={dispatch} />
+          </div>
         </div>
 
         {!isOnlyInvites && (
@@ -379,7 +390,7 @@ const SettingsFoldersEdit: FC<OwnProps & StateProps> = ({
       </div>
 
       <FloatingActionButton
-        isShown={Boolean(state.isTouched)}
+        isShown={Boolean(state.isTouched) && FolderUtils.getTitleAvailableChars(state.folder.title) >= 0}
         disabled={state.isLoading}
         onClick={handleSubmit}
         ariaLabel={state.mode === 'edit' ? 'Save changes' : 'Create folder'}

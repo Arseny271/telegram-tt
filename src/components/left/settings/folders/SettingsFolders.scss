@@ -11,6 +11,31 @@
   margin-left: 0.25rem;
 }
 
+.settings-folder-input-name {
+  width: 100%;
+  position: relative;
+
+  input {
+    padding-right: 2.75rem;
+  }
+}
+
+.settings-folder-input-name-icon {
+  cursor: var(--custom-cursor, pointer);
+  color: var(--color-text-secondary);
+  position: absolute;
+  --custom-emoji-size: 2rem;
+  font-size: 2rem !important;
+  top: 50%;
+  margin-top: -1.375rem;
+  right: 0.125rem;
+  display: flex;
+
+  .icon {
+    font-size: 2rem !important;
+  }
+}
+
 .settings-folders-list-item {
   .ListItem-main-icon {
     margin-inline-end: 1.875rem !important;

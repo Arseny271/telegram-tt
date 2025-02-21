@@ -1,6 +1,14 @@
 @use "../../../styles/mixins";
 
-#LeftMainHeader {
+.dropdown-portal {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: center;
+  align-items: center;
+  height: 3.5rem;
+}
+
+#LeftMainHeader, .dropdown-portal {
   position: relative;
 
   .DropdownMenuFiller {

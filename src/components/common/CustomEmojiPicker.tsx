@@ -65,6 +65,7 @@ type OwnProps = {
   withDefaultTopicIcons?: boolean;
   selectedReactionIds?: string[];
   isStatusPicker?: boolean;
+  isFolderPicker?: boolean;
   isReactionPicker?: boolean;
   isTranslucent?: boolean;
   onCustomEmojiSelect: (sticker: ApiSticker) => void;
@@ -130,6 +131,7 @@ const CustomEmojiPicker: FC<OwnProps & StateProps> = ({
   canAnimate,
   isReactionPicker,
   isStatusPicker,
+  isFolderPicker,
   isTranslucent,
   isSavedMessages,
   isCurrentUserPremium,
@@ -161,10 +163,11 @@ const CustomEmojiPicker: FC<OwnProps & StateProps> = ({
   } = useScrolledState();
 
   const recentCustomEmojis = useMemo(() => {
+    if (isFolderPicker) return [];
     return isStatusPicker
       ? recentStatusEmojis
       : Object.values(pickTruthy(customEmojisById!, recentCustomEmojiIds!));
-  }, [customEmojisById, isStatusPicker, recentCustomEmojiIds, recentStatusEmojis]);
+  }, [customEmojisById, isStatusPicker, isFolderPicker, recentCustomEmojiIds, recentStatusEmojis]);
 
   const collectibleStatusEmojis = useMemo(() => {
     const collectibleStatusEmojiIds = collectibleStatuses?.map((status) => status.documentId);
@@ -242,6 +245,18 @@ const CustomEmojiPicker: FC<OwnProps & StateProps> = ({
           isEmoji: true,
         });
       }
+    } else if (isFolderPicker) {
+      const defaultStatusIconsPack = stickerSetsById[defaultStatusIconsId!];
+      if (defaultStatusIconsPack?.stickers?.length) {
+        defaultSets.push({
+          ...defaultStatusIconsPack,
+          count: 0,
+          id: RECENT_SYMBOL_SET_ID,
+          reactions: [],
+          stickers: [],
+          title: lang('RecentStickers'),
+        });
+      }
     } else if (isStatusPicker) {
       const defaultStatusIconsPack = stickerSetsById[defaultStatusIconsId!];
       if (defaultStatusIconsPack?.stickers?.length) {
@@ -301,7 +316,7 @@ const CustomEmojiPicker: FC<OwnProps & StateProps> = ({
       ...setsToDisplay,
     ];
   }, [
-    addedCustomEmojiIds, isReactionPicker, isStatusPicker, withDefaultTopicIcons, recentCustomEmojis,
+    addedCustomEmojiIds, isReactionPicker, isStatusPicker, isFolderPicker, withDefaultTopicIcons, recentCustomEmojis,
     customEmojiFeaturedIds, stickerSetsById, topReactions, availableReactions, oldLang, recentReactions,
     defaultStatusIconsId, defaultTopicIconsId, isSavedMessages, defaultTagReactions, chatEmojiSetId,
     isWithPaidReaction, collectibleStatusEmojis, lang,
@@ -446,7 +461,7 @@ const CustomEmojiPicker: FC<OwnProps & StateProps> = ({
       >
         {allSets.map((stickerSet, i) => {
           const shouldHideHeader = stickerSet.id === TOP_SYMBOL_SET_ID
-            || (stickerSet.id === RECENT_SYMBOL_SET_ID && (withDefaultTopicIcons || isStatusPicker));
+            || (stickerSet.id === RECENT_SYMBOL_SET_ID && (withDefaultTopicIcons || isStatusPicker || isFolderPicker));
           const isChatEmojiSet = stickerSet.id === chatEmojiSetId;
 
           return (
@@ -466,6 +481,7 @@ const CustomEmojiPicker: FC<OwnProps & StateProps> = ({
               shouldHideHeader={shouldHideHeader}
               withDefaultTopicIcon={withDefaultTopicIcons && stickerSet.id === RECENT_SYMBOL_SET_ID}
               withDefaultStatusIcon={isStatusPicker && stickerSet.id === RECENT_SYMBOL_SET_ID}
+              withDefaultFolderIcon={isFolderPicker && stickerSet.id === RECENT_SYMBOL_SET_ID}
               isChatEmojiSet={isChatEmojiSet}
               isCurrentUserPremium={isCurrentUserPremium}
               selectedReactionIds={selectedReactionIds}
@@ -487,7 +503,9 @@ const CustomEmojiPicker: FC<OwnProps & StateProps> = ({
 };
 
 export default memo(withGlobal<OwnProps>(
-  (global, { chatId, isStatusPicker, isReactionPicker }): StateProps => {
+  (global, {
+    chatId, isStatusPicker, isFolderPicker, isReactionPicker,
+  }): StateProps => {
     const {
       stickers: {
         setsById: stickerSetsById,
@@ -513,9 +531,9 @@ export default memo(withGlobal<OwnProps>(
     const collectibleStatuses = global.collectibleEmojiStatuses?.statuses;
 
     return {
-      customEmojisById,
-      recentCustomEmojiIds: !isStatusPicker ? recentCustomEmojiIds : undefined,
-      recentStatusEmojis: isStatusPicker ? recentStatusEmojis : undefined,
+      customEmojisById: !(isStatusPicker || isFolderPicker) ? customEmojisById : undefined,
+      recentCustomEmojiIds: !(isStatusPicker || isFolderPicker) ? recentCustomEmojiIds : undefined,
+      recentStatusEmojis: (isStatusPicker || isFolderPicker) ? recentStatusEmojis : undefined,
       collectibleStatuses: isStatusPicker ? collectibleStatuses : undefined,
       stickerSetsById,
       addedCustomEmojiIds: global.customEmojis.added.setIds,

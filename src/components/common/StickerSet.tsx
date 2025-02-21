@@ -1,6 +1,7 @@
 import type { FC } from '../../lib/teact/teact';
 import React, {
-  memo, useEffect, useMemo, useRef, useState,
+  memo,
+  useEffect, useMemo, useRef, useState,
 } from '../../lib/teact/teact';
 import { getActions, getGlobal, withGlobal } from '../../global';
 
@@ -9,6 +10,7 @@ import type {
 } from '../../api/types';
 import type { ObserveFn } from '../../hooks/useIntersectionObserver';
 import type { StickerSetOrReactionsSetOrRecent } from '../../types';
+import type { FolderEmoticonInfo, FolderEmoticonName } from '../../util/folders';
 
 import {
   COLLECTIBLE_STATUS_SET_ID,
@@ -25,6 +27,7 @@ import {
 import { getReactionKey } from '../../global/helpers';
 import { selectIsAlwaysHighPriorityEmoji, selectIsSetPremium } from '../../global/selectors';
 import buildClassName from '../../util/buildClassName';
+import { FolderUtils } from '../../util/folders';
 
 import useAppLayout from '../../hooks/useAppLayout';
 import useFlag from '../../hooks/useFlag';
@@ -58,6 +61,7 @@ type OwnProps = {
   selectedReactionIds?: string[];
   withDefaultTopicIcon?: boolean;
   withDefaultStatusIcon?: boolean;
+  withDefaultFolderIcon?: boolean;
   isChatEmojiSet?: boolean;
   isChatStickerSet?: boolean;
   isTranslucent?: boolean;
@@ -87,6 +91,33 @@ const ITEMS_MOBILE_PER_ROW_FALLBACK = 7;
 const ITEMS_MINI_MOBILE_PER_ROW_FALLBACK = 6;
 const MOBILE_WIDTH_THRESHOLD_PX = 440;
 const MINI_MOBILE_WIDTH_THRESHOLD_PX = 362;
+const FOLDER_ICONS: FolderEmoticonName[] = [
+  'All', 'Unread', 'Private', 'Groups',
+  'Favorite', 'Channels', 'Bots', 'Custom',
+];
+
+type FolderButtonProps = {
+  info: FolderEmoticonInfo;
+  onClick: (info: FolderEmoticonInfo) => void;
+};
+
+const FolderButton: FC<FolderButtonProps> = ({
+  info, onClick,
+}) => {
+  const handle = useLastCallback(() => {
+    onClick(info);
+  });
+
+  return (
+    <Button
+      className="StickerButton custom-emoji folder-default"
+      color="translucent"
+      onClick={handle}
+    >
+      <Icon name={info.icon} />
+    </Button>
+  );
+};
 
 const StickerSet: FC<OwnProps & StateProps> = ({
   stickerSet,
@@ -104,6 +135,7 @@ const StickerSet: FC<OwnProps & StateProps> = ({
   withDefaultTopicIcon,
   selectedReactionIds,
   withDefaultStatusIcon,
+  withDefaultFolderIcon,
   isChatEmojiSet,
   isChatStickerSet,
   isTranslucent,
@@ -210,6 +242,19 @@ const StickerSet: FC<OwnProps & StateProps> = ({
     } satisfies ApiSticker);
   });
 
+  const handleDefaultFolderIconClick = useLastCallback((info: FolderEmoticonInfo) => {
+    onStickerSelect?.({
+      id: info.name,
+      emoji: info.emoticon,
+      mediaType: 'sticker',
+      isLottie: false,
+      isVideo: false,
+      stickerSetInfo: {
+        shortName: 'dummy',
+      },
+    } satisfies ApiSticker);
+  });
+
   const itemSize = isEmoji ? EMOJI_SIZE_PICKER : STICKER_SIZE_PICKER;
   const margin = isEmoji ? emojiMarginPx : stickerMarginPx;
   const verticalMargin = isEmoji ? emojiVerticalMarginPx : stickerMarginPx;
@@ -254,7 +299,8 @@ const StickerSet: FC<OwnProps & StateProps> = ({
 
   const [isCut, , expand] = useFlag(canCut);
   const itemsBeforeCutout = itemsPerRow * 3 - 1;
-  const totalItemsCount = (withDefaultTopicIcon || withDefaultStatusIcon) ? stickerSet.count + 1 : stickerSet.count;
+  const totalItemsCount = withDefaultFolderIcon ? stickerSet.count + FOLDER_ICONS.length
+    : (withDefaultTopicIcon || withDefaultStatusIcon) ? stickerSet.count + 1 : stickerSet.count;
 
   const itemHeight = itemSize + verticalMargin;
   const heightWhenCut = Math.ceil(Math.min(itemsBeforeCutout, totalItemsCount) / itemsPerRow)
@@ -353,6 +399,9 @@ const StickerSet: FC<OwnProps & StateProps> = ({
             <Icon name="star" />
           </Button>
         )}
+        {withDefaultFolderIcon && (
+          FOLDER_ICONS.map((name: FolderEmoticonName) => (
+            <FolderButton info={FolderUtils.getInfo(name)} onClick={handleDefaultFolderIconClick} />)))}
         {shouldRender && stickerSet.reactions?.map((reaction) => {
           const reactionId = getReactionKey(reaction);
           const isSelected = reactionId ? selectedReactionIds?.includes(reactionId) : undefined;

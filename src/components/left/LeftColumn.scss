@@ -1,3 +1,13 @@
+#Main.has-folders {
+  .left-header {
+    .DropdownMenu {
+      @media (min-width: 926px) {
+        display: none;
+      }
+    }
+  }
+}
+
 #NewChat {
   height: 100%;
 }
@@ -22,8 +32,11 @@
     white-space: nowrap;
   }
 
+  .DropdownMenu {
+    margin-right: 0.625rem;
+  }
+
   .SearchInput {
-    margin-left: 0.625rem;
     max-width: calc(100% - 3.25rem);
 
     @media (max-width: 600px) {

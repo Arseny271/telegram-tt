@@ -1,10 +1,12 @@
 import { getGlobal } from '../../global';
 
-import type { ApiChatFolder } from '../../api/types';
+import type { ApiChatFolder, ApiSticker } from '../../api/types';
 import type { IconName } from '../../types/icons';
 import type { Dispatch, StateReducer } from '../useReducer';
+import { ApiMessageEntityTypes } from '../../api/types';
 
 import { selectChat } from '../../global/selectors';
+import { FolderUtils } from '../../util/folders';
 import { omit, pick } from '../../util/iteratees';
 import useReducer from '../useReducer';
 
@@ -109,14 +111,14 @@ export type FoldersState = {
   error?: string;
   folderId?: number;
   chatFilter: string;
-  folder: Omit<ApiChatFolder, 'id' | 'description' | 'emoticon'>;
+  folder: Omit<ApiChatFolder, 'id' | 'description'>;
   includeFilters?: FolderIncludeFilters;
   excludeFilters?: FolderExcludeFilters;
 };
 export type FoldersActions = (
   'setTitle' | 'saveFilters' | 'editFolder' | 'reset' | 'setChatFilter' | 'setIsLoading' | 'setError' |
   'editIncludeFilters' | 'editExcludeFilters' | 'setIncludeFilters' | 'setExcludeFilters' | 'setIsTouched' |
-  'setFolderId' | 'setIsChatlist'
+  'setFolderId' | 'setIsChatlist' | 'setEmoticon' | 'setEmoticonCustom'
   );
 export type FolderEditDispatch = Dispatch<FoldersState, FoldersActions>;
 
@@ -135,15 +137,45 @@ const foldersReducer: StateReducer<FoldersState, FoldersActions> = (
   action,
 ): FoldersState => {
   switch (action.type) {
-    case 'setTitle':
+    case 'setTitle': {
+      const emoji = FolderUtils.getTitleCustomEmojiId(state.folder.title);
       return {
         ...state,
         folder: {
           ...state.folder,
-          title: { text: action.payload },
+          title: FolderUtils.buildTitle(action.payload, emoji),
         },
         isTouched: true,
       };
+    }
+    case 'setEmoticonCustom': {
+      const sticker = action.payload as ApiSticker;
+      const text = FolderUtils.getTitle(state.folder.title);
+
+      return {
+        ...state,
+        folder: {
+          ...state.folder,
+          title: FolderUtils.buildTitle(text, {
+            emoticon: sticker.emoji || '',
+            emojiDocumentId: sticker.id,
+          }),
+        },
+        isTouched: true,
+      };
+    }
+    case 'setEmoticon': {
+      const text = FolderUtils.getTitle(state.folder.title);
+      return {
+        ...state,
+        folder: {
+          ...state.folder,
+          emoticon: action.payload,
+          title: { text },
+        },
+        isTouched: true,
+      };
+    }
     case 'setFolderId':
       return {
         ...state,

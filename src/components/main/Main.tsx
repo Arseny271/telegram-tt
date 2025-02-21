@@ -107,6 +107,7 @@ type StateProps = {
   isForwardModalOpen: boolean;
   hasNotifications: boolean;
   hasDialogs: boolean;
+  hasFolders: boolean;
   safeLinkModalUrl?: string;
   isHistoryCalendarOpen: boolean;
   shouldSkipHistoryAnimations?: boolean;
@@ -158,6 +159,7 @@ const Main = ({
   isForwardModalOpen,
   hasNotifications,
   hasDialogs,
+  hasFolders,
   activeGroupCallId,
   safeLinkModalUrl,
   isHistoryCalendarOpen,
@@ -507,6 +509,7 @@ const Main = ({
     isNarrowMessageList && 'narrow-message-list',
     shouldSkipHistoryAnimations && 'history-animation-disabled',
     isFullscreen && 'is-fullscreen',
+    hasFolders && 'has-folders',
   );
 
   const handleBlur = useLastCallback(() => {
@@ -538,6 +541,7 @@ const Main = ({
 
   return (
     <div ref={containerRef} id="Main" className={className}>
+      <div id="FoldersColumn" />
       <LeftColumn ref={leftColumnRef} />
       <MiddleColumn leftColumnRef={leftColumnRef} isMobile={isMobile} />
       <RightColumn isMobile={isMobile} />
@@ -630,6 +634,11 @@ export default memo(withGlobal<OwnProps>(
       limitReachedModal,
       deleteFolderDialogModal,
     } = selectTabState(global);
+    const {
+      chatFolders: {
+        byId: chatFoldersById,
+      },
+    } = global;
 
     const gameMessage = openedGame && selectChatMessage(global, openedGame.chatId, openedGame.messageId);
     const gameTitle = gameMessage?.content.game?.title;
@@ -650,6 +659,7 @@ export default memo(withGlobal<OwnProps>(
       isReactionPickerOpen: selectIsReactionPickerOpen(global),
       hasNotifications: Boolean(notifications.length),
       hasDialogs: Boolean(dialogs.length),
+      hasFolders: Boolean(Object.keys(chatFoldersById).length),
       safeLinkModalUrl,
       isHistoryCalendarOpen: Boolean(historyCalendarSelectedAt),
       shouldSkipHistoryAnimations,

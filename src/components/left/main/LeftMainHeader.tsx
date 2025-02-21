@@ -41,6 +41,7 @@ import PeerChip from '../../common/PeerChip';
 import StoryToggler from '../../story/StoryToggler';
 import Button from '../../ui/Button';
 import DropdownMenu from '../../ui/DropdownMenu';
+import Portal from '../../ui/Portal';
 import SearchInput from '../../ui/SearchInput';
 import ShowTransition from '../../ui/ShowTransition';
 import ConnectionStatusOverlay from '../ConnectionStatusOverlay';
@@ -250,32 +251,39 @@ const LeftMainHeader: FC<OwnProps & StateProps> = ({
     );
   }, [globalSearchChatId, selectedSearchDate]);
 
+  const dropdownComponent = () => (
+    <DropdownMenu
+      trigger={MainButton}
+      footer={`${APP_NAME} ${versionString}`}
+      className={buildClassName(
+        'main-menu',
+        oldLang.isRtl && 'rtl',
+        shouldHideSearch && oldLang.isRtl && 'right-aligned',
+        shouldDisableDropdownMenuTransitionRef.current && oldLang.isRtl && 'disable-transition',
+      )}
+      forceOpen={isBotMenuOpen}
+      positionX={shouldHideSearch && oldLang.isRtl ? 'right' : 'left'}
+      transformOriginX={IS_ELECTRON && IS_MAC_OS && !isFullscreen ? 90 : undefined}
+      onTransitionEnd={oldLang.isRtl ? handleDropdownMenuTransitionEnd : undefined}
+    >
+      <LeftSideMenuItems
+        onSelectArchived={onSelectArchived}
+        onSelectContacts={onSelectContacts}
+        onSelectSettings={onSelectSettings}
+        onBotMenuOpened={markBotMenuOpen}
+        onBotMenuClosed={unmarkBotMenuOpen}
+      />
+    </DropdownMenu>
+  );
+
   return (
     <div className="LeftMainHeader">
       <div id="LeftMainHeader" className="left-header" ref={headerRef}>
         {oldLang.isRtl && <div className="DropdownMenuFiller" />}
-        <DropdownMenu
-          trigger={MainButton}
-          footer={`${APP_NAME} ${versionString}`}
-          className={buildClassName(
-            'main-menu',
-            oldLang.isRtl && 'rtl',
-            shouldHideSearch && oldLang.isRtl && 'right-aligned',
-            shouldDisableDropdownMenuTransitionRef.current && oldLang.isRtl && 'disable-transition',
-          )}
-          forceOpen={isBotMenuOpen}
-          positionX={shouldHideSearch && oldLang.isRtl ? 'right' : 'left'}
-          transformOriginX={IS_ELECTRON && IS_MAC_OS && !isFullscreen ? 90 : undefined}
-          onTransitionEnd={oldLang.isRtl ? handleDropdownMenuTransitionEnd : undefined}
-        >
-          <LeftSideMenuItems
-            onSelectArchived={onSelectArchived}
-            onSelectContacts={onSelectContacts}
-            onSelectSettings={onSelectSettings}
-            onBotMenuOpened={markBotMenuOpen}
-            onBotMenuClosed={unmarkBotMenuOpen}
-          />
-        </DropdownMenu>
+        {dropdownComponent()}
+        <Portal className="dropdown-portal" containerSelector="#FoldersColumn">
+          {dropdownComponent()}
+        </Portal>
         <SearchInput
           inputId="telegram-search-input"
           resultsItemSelector=".LeftSearch .ListItem-button"

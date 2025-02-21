@@ -9,7 +9,7 @@ import type { GlobalState } from '../../../global/types';
 import type { FolderEditDispatch } from '../../../hooks/reducers/useFoldersReducer';
 import type { LeftColumnContent, SettingsScreens } from '../../../types';
 import type { MenuItemContextAction } from '../../ui/ListItem';
-import type { TabWithProperties } from '../../ui/TabList';
+import type { TabWithProperties } from '../../ui/TabListFolders';
 
 import { ALL_FOLDER_ID } from '../../../config';
 import { selectCanShareFolder, selectTabState } from '../../../global/selectors';
@@ -29,7 +29,9 @@ import useLastCallback from '../../../hooks/useLastCallback';
 import useShowTransition from '../../../hooks/useShowTransition';
 
 import StoryRibbon from '../../story/StoryRibbon';
+import Portal from '../../ui/Portal';
 import TabList from '../../ui/TabList';
+import TabListFolders from '../../ui/TabListFolders';
 import Transition from '../../ui/Transition';
 import ChatList from './ChatList';
 
@@ -203,6 +205,7 @@ const ChatFolders: FC<OwnProps & StateProps> = ({
           entities: title.entities,
           noCustomEmojiPlayback: folder.noTitleAnimations,
         }),
+        folder,
         badgeCount: folderCountersById[id]?.chatsCount,
         isBadgeActive: Boolean(folderCountersById[id]?.notificationsCount),
         isBlocked,
@@ -344,6 +347,17 @@ const ChatFolders: FC<OwnProps & StateProps> = ({
       ) : shouldRenderPlaceholder ? (
         <div ref={placeholderRef} className="tabs-placeholder" />
       ) : undefined}
+      {shouldRenderFolders ? (
+        <Portal className="custom-scroll" containerSelector="#FoldersColumn">
+          <TabListFolders
+            contextRootElementSelector="#LeftColumn"
+            tabs={folderTabs}
+            activeTab={activeChatFolder}
+            onSwitchTab={handleSwitchTab}
+          />
+        </Portal>
+      ) : undefined}
+
       <Transition
         ref={transitionRef}
         name={shouldSkipHistoryAnimations ? 'none' : lang.isRtl ? 'slideOptimizedRtl' : 'slideOptimized'}
